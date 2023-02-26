@@ -27,12 +27,12 @@ jobs:
         pip install poetry autopep8 pytest
     - name: Lint
       run: autopep8 src/ tests/
-    - name: Build package
-      run: poetry build
     - name: Test package
       run: |
         poetry install
         poetry run pytest
+    - name: Build package
+      run: poetry build
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
       with:

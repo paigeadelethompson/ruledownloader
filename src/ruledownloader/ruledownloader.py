@@ -28,8 +28,9 @@ import sys
 import os
 import os.path
 import time
-from configparser import ConfigParser
+import configparser as ConfigParser
 import urllib
+import urllib.request
 import logging
 import hashlib
 import re
@@ -106,7 +107,7 @@ def get_progress_meter():
 def getFileMd5(filename):
     """ Return the hex md5 of the given filename. """
     m = hashlib.md5()
-    m.update(open(filename).read())
+    m.update(open(filename, 'rb').read())
     return m.hexdigest()
 
 
@@ -125,7 +126,7 @@ def getRemoteMd5(url):
     the MD5 is in the remote filename with .md5 appended. """
     logging.info("Downloading %s.", url)
     try:
-        remote = urllib.urlopen(url)
+        remote = urllib.request.urlopen(url)
     except urllib.URLError as err:
         logging.error("Failed to download MD5 URL: %s", err)
         return None
@@ -143,7 +144,7 @@ def getRulesets():
     rulesets = {}
 
     for section in [s for s in config.sections() if s.startswith("ruleset ")]:
-        name = string.split(section, " ", maxsplit=1)[1]
+        name = section.split(" ", maxsplit=1)[1]
         if config.has_section(section):
             if config.getboolean(section, "enabled"):
                 rulesets[name] = {}
@@ -184,7 +185,7 @@ def download_ruleset(ruleset):
     logging.info("Downloading %s to %s.", url, destFile)
     try:
         meter = get_progress_meter()
-        tmpDestFile, headers = urllib.urlretrieve(url, reporthook=meter.update)
+        tmpDestFile, headers = urllib.request.urlretrieve(url, reporthook=meter.update)
         meter.done()
         logging.debug("Downloaded to %s.", tmpDestFile)
     except Exception:
