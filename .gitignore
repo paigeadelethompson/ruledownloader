@@ -1,3 +1,9 @@
 .svn
 *~
 *.pyc
+build/
+dist/
+Pipfile.lock
+requirements.txt
+*.egg-info/
+poetry.lock

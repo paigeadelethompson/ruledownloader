@@ -5,22 +5,25 @@
 
 import sys
 import tarfile
-import difflib
-from cStringIO import StringIO
+from io import StringIO
 import re
 
+
 def usage(fileobj=sys.stderr):
-    print >>fileobj, ("USAGE: %s <old> <new>" % sys.argv[0])
+    fileobj.write("USAGE: {} <old> <new>\n".format(sys.argv[0]))
+
 
 def getRuleMsg(rule):
     """ Return the rule msg (description). """
-    m = re.search("msg:\s?\"(.*?)\";", rule)
+    m = re.search("msg:\\s?\"(.*?)\";", rule)
     if m:
         return m.group(1)
     return rule
 
-rulePattern = re.compile("^#?\s?alert.*sid:\s?(\d+)")
-gidPattern = re.compile("gid:\s?(\d+)")
+
+rulePattern = re.compile("^#?\\s?alert.*sid:\\s?(\\d+)")
+gidPattern = re.compile("gid:\\s?(\\d+)")
+
 
 def loadRules(ruledb, buf):
     """ Load the rules in buf into the dict ruledb keyed by the
@@ -42,6 +45,7 @@ def loadRules(ruledb, buf):
             sidgid = "%s:%s" % (gid, sid)
             ruledb[sidgid] = line
 
+
 def tarToDict(filename):
     """ Convert a tarfile into a dict of file contents keyed by
     filenames. """
@@ -53,6 +57,7 @@ def tarToDict(filename):
     tf.close()
     return files
 
+
 def getModifiedRules(oldRuleDb, newRuleDb):
     """ Return a list of rules that have been modified. """
     rules = []
@@ -60,6 +65,7 @@ def getModifiedRules(oldRuleDb, newRuleDb):
         if gidsid in oldRuleDb and oldRuleDb[gidsid] != newRuleDb[gidsid]:
             rules.append(gidsid)
     return rules
+
 
 def getEnabledRules(oldRuleDb, newRuleDb):
     """ Return a list of rules that have gone from disabled to
@@ -72,6 +78,7 @@ def getEnabledRules(oldRuleDb, newRuleDb):
                 rules.append(gidsid)
     return rules
 
+
 def getDisabledRules(oldRuleDb, newRuleDb):
     """ Return a list of rules that have gone from enabled to
     disabled. """
@@ -83,11 +90,12 @@ def getDisabledRules(oldRuleDb, newRuleDb):
                 rules.append(gidsid)
     return rules
 
+
 def main(args, fileobj=sys.stdout):
     try:
         oldFile = args[0]
         newFile = args[1]
-    except:
+    except BaseException:
         usage()
         return 1
 
@@ -98,55 +106,56 @@ def main(args, fileobj=sys.stdout):
     for f in oldRuleset:
         if f.endswith(".rules"):
             loadRules(oldRuleDb, oldRuleset[f])
-    print >>fileobj, ("Loaded %d rules from old ruleset." % len(oldRuleDb))
+    fileobj.write("Loaded {} rules from old ruleset.\n".format(len(oldRuleDb)))
     for f in newRuleset:
         if f.endswith(".rules"):
             loadRules(newRuleDb, newRuleset[f])
-    print >>fileobj, ("Loaded %d rules from new ruleset." % len(newRuleDb))
+    fileobj.write("Loaded {} rules from new ruleset.\n".format(len(newRuleDb)))
 
     # Find new files.
     files = set(newRuleset).difference(set(oldRuleset))
-    print >>fileobj, ("\nNew files: (%d)" % len(files))
-    for f in files: 
-        print >>fileobj, ("- %s" % f)
+    fileobj.write("New files: ({})\n".format(len(files)))
+    for f in files:
+        fileobj.write("- {}".format(f))
 
     # Find removed files.
     files = set(oldRuleset).difference(set(newRuleset))
-    print >>fileobj, ("\nRemoved files: (%d)" % len(files))
-    for f in files: 
-        print >>fileobj, ("- %s" % f)
+    fileobj.write("Removed files: ({})\n".format(len(files)))
+    for f in files:
+        fileobj.write("- {}\n".format(f))
 
     # New rules.
     rules = set(newRuleDb).difference(set(oldRuleDb))
-    print >>fileobj, ("\nNew rules: (%d)" % len(rules))
+    fileobj.write("New rules: ({})\n".format(len(rules)))
     for gidsid in rules:
-        print >>fileobj, ("- %s: %s" % (gidsid, getRuleMsg(newRuleDb[gidsid])))
+        fileobj.write("- {}: {}".format(gidsid, getRuleMsg(newRuleDb[gidsid])))
 
     # Deleted rules.
     rules = set(oldRuleDb).difference(set(newRuleDb))
-    print >>fileobj, ("\nDeleted rules: (%d)" % len(rules))
+    fileobj.write("Deleted rules: ({})\n".format(len(rules)))
     for gidsid in rules:
-        print >>fileobj, ("- %s: %s" % (gidsid, getRuleMsg(oldRuleDb[gidsid])))
+        fileobj.write("- {}: {}\n".format(gidsid, getRuleMsg(oldRuleDb[gidsid])))
 
     # Modified rules.
     rules = getModifiedRules(oldRuleDb, newRuleDb)
-    print >>fileobj, ("\nModified rules: (%d)" % len(rules))
+    fileobj.write("Modified rules: ({}})\n" % len(rules))
     for gidsid in rules:
-        print >>fileobj, ("- %s: %s" % (gidsid, getRuleMsg(newRuleDb[gidsid])))
+        fileobj.write("- {}: {}\n".format(gidsid, getRuleMsg(newRuleDb[gidsid])))
 
     # Rules now enabled.
     rules = getEnabledRules(oldRuleDb, newRuleDb)
-    print >>fileobj, ("\nRules now enabled: (%d)" % len(rules))
+    fileobj.write("Rules now enabled: ({})".format(len(rules)))
     for gidsid in rules:
-        print >>fileobj, ("- %s: %s" % (gidsid, getRuleMsg(newRuleDb[gidsid])))
+        fileobj.write("- {}: {}".format(gidsid, getRuleMsg(newRuleDb[gidsid])))
 
     # Rules now disabled.
     rules = getDisabledRules(oldRuleDb, newRuleDb)
-    print >>fileobj, ("\nRules now disabled: (%d)" % len(rules))
+    fileobj.write("Rules now disabled: ({})\n".formatlen(rules))
     for gidsid in rules:
-        print >>fileobj, ("- %s: %s" % (gidsid, getRuleMsg(newRuleDb[gidsid])))
+        fileobj.format("- {}: {}\n".format(gidsid, getRuleMsg(newRuleDb[gidsid])))
 
     return 0
 
-if __name__ == "__main__":
+
+def entry():
     sys.exit(main(sys.argv[1:]))

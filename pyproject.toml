@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "ruledownloader"
+version = "1.0.0"
+description = "A tool for downloading and archiving Snort and Suricata rules"
+authors = ["Jason Ish"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/paigeadelethompson/ruledownloader"
+documentation = "https://github.com/paigeadelethompson/ruledownloader#rule-downloader"
+repository = "https://github.com/paigeadelethompson/ruledownloader.git"
+keywords = ["suricata", "snort", "security"]
+maintainers = ["Paige Thompson <paige@paige.bio>"]
+classifiers = [
+  "Programming Language :: Python"
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+configparser = "*"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+autoflake8 = "*"
+autopep8 = "*"
+ipython = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+ruledownloader = "ruledownloader.ruledownloader:main"
+rulechanges = "ruledownloader.rulechanges:entry"
+
+[tool.autopep8]
+max_line_length = 120
+ignore = ["E501", "W6"]
+in-place = false
+diff = true
+recursive = true
+aggressive = 3

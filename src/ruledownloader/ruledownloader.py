@@ -40,15 +40,16 @@ import string
 try:
     import progressbar
     has_progressbar = True
-except:
+except BaseException:
     has_progressbar = False
 
-import rulechanges
+from ruledownloader import rulechanges
 
 valid_content_types = ["application/x-gzip",
                        "application/x-tar",
                        "application/octet-stream",
                        "binary/octet-stream"]
+
 
 class NullProgressMeter(object):
 
@@ -57,6 +58,7 @@ class NullProgressMeter(object):
 
     def done(self):
         pass
+
 
 class SimpleProgressMeter(object):
 
@@ -74,6 +76,7 @@ class SimpleProgressMeter(object):
         sys.stdout.write("\n")
         sys.stdout.flush()
 
+
 class FancyProgressMeter(object):
 
     def __init__(self):
@@ -90,6 +93,7 @@ class FancyProgressMeter(object):
     def done(self):
         self.bar.finish()
 
+
 def get_progress_meter():
     if not sys.stdout.isatty():
         return NullProgressMeter()
@@ -98,11 +102,13 @@ def get_progress_meter():
     else:
         return SimpleProgressMeter()
 
+
 def getFileMd5(filename):
     """ Return the hex md5 of the given filename. """
     m = hashlib.md5()
     m.update(open(filename).read())
     return m.hexdigest()
+
 
 def extractFilenameFromUrl(url):
     """ Extract a filename from a URL. """
@@ -113,13 +119,14 @@ def extractFilenameFromUrl(url):
                 return part
     return None
 
+
 def getRemoteMd5(url):
     """ Get the MD5 of the remote file.  Note that this assumes that
     the MD5 is in the remote filename with .md5 appended. """
     logging.info("Downloading %s.", url)
     try:
-        remote = urllib2.urlopen(url)
-    except urllib2.URLError as err:
+        remote = urllib.urlopen(url)
+    except urllib.URLError as err:
         logging.error("Failed to download MD5 URL: %s", err)
         return None
     output = remote.read()
@@ -128,6 +135,7 @@ def getRemoteMd5(url):
         return m.group(1)
     else:
         return None
+
 
 def getRulesets():
     """ Get the set of configured rulesets. """
@@ -142,6 +150,7 @@ def getRulesets():
                 rulesets[name]["name"] = name
                 rulesets[name]["url"] = config.get(section, "url")
     return rulesets
+
 
 def download_ruleset(ruleset):
     name = ruleset["name"]
@@ -178,7 +187,7 @@ def download_ruleset(ruleset):
         tmpDestFile, headers = urllib.urlretrieve(url, reporthook=meter.update)
         meter.done()
         logging.debug("Downloaded to %s.", tmpDestFile)
-    except Exception as e:
+    except Exception:
         logging.error("Failed to download %s.", url)
         raise
 
@@ -227,17 +236,19 @@ def download_ruleset(ruleset):
                 (latestFilename, "%s/%s" % (latestLink, filename)),
                 report_out)
 
+
 def usage(output):
-    print >>output, """
-USAGE: %s [options] [ruleset]
+    output.write("""
+USAGE: {} [options] [ruleset]\n
+\n
+Options:\n
+        -c <filename> Configuration file.\n
+        -D            Enable debug output.\n
 
-Options:
-        -c <filename> Configuration file.
-        -D            Enable debug output.
+If one or more ruleset names are provided on the command then they will\n
+be the only ones checked for updates.\n
+""".format(sys.argv[0]))
 
-If one or more ruleset names are provided on the command then they will
-be the only ones checked for updates.
-""" % sys.argv[0]
 
 def main():
     global config
@@ -249,7 +260,7 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], "Dc:h", [])
     except getopt.GetoptError as err:
-        print >>sys.stderr, "ERROR: " + str(err)
+        sys.stderr.write("ERROR: {}".format(str(err)))
         usage(sys.stderr)
         return 1
     for o, a in opts:
@@ -284,5 +295,6 @@ def main():
             logging.info("Processing ruleset %s.", key)
             download_ruleset(rulesets[key])
 
-if __name__ == '__main__':
-    sys.exit(main())
+
+def entry():
+    main()
